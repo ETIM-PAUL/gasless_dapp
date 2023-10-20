@@ -1,73 +1,65 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
 import {
   ThirdwebProvider,
   ConnectWallet,
-  metamaskWallet,
-  smartWallet,
-  coinbaseWallet,
-  walletConnect,
-  embeddedWallet,
+  Web3Button,
 } from "@thirdweb-dev/react";
-
-const smartWalletOptions = {
-  factoryAddress: "YOUR_FACTORY_ADDRESS",
-  gasless: true,
-};
+import counterABI from './abi';
+import Counter from './counter';
+import Caller from './caller';
+import { clientId, contractAddress, relayerUrl } from './utils';
 
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
     <>
-      <div className='flex-items'>
-        <h2>Gasless Dapp</h2>
-        <ThirdwebProvider
-          activeChain="mumbai"
-          clientId="YOUR_CLIENT_ID"
-          supportedWallets={[
-            smartWallet(
-              metamaskWallet({ recommended: true }),
-              smartWalletOptions,
-            ),
-            smartWallet(
-              coinbaseWallet(),
-              smartWalletOptions,
-            ),
-            smartWallet(
-              walletConnect(),
-              smartWalletOptions,
-            ),
-          ]}
-        >
-          <ConnectWallet
-            theme={"dark"}
-            switchToActiveChain={true}
-            modalSize={"wide"}
-          />
-        </ThirdwebProvider>
-        {/* <button className='connect_btn'>Connect Wallet</button> */}
-      </div>
-      <p>
-        Last account to change counter - 0x1b6e16403b06a51C42Ba339E356a64fE67348e92
-      </p>
-      <div className="card">
-        <button>
-          counter is {count}
-        </button>
-        <div className='flex-items btn-group'>
-          <button onClick={() => setCount((count) => count + 1)}>
-            Increment
-          </button>
-          <button onClick={() => setCount((count) => count + 1)}>
-            Decrement
-          </button>
-
+      <ThirdwebProvider
+        activeChain="mumbai"
+        clientId={clientId}
+        sdkOptions={{
+          gasless: {
+            openzeppelin: {
+              relayerUrl: relayerUrl,
+            },
+          },
+        }}
+        desiredChainId={80001}
+      >
+        <div className='flex-items'>
+          <h2>Gasless Dapp</h2>
+          <ConnectWallet />
         </div>
-      </div>
+        <p>
+          <Caller />
+        </p>
+        <div className="card">
+          <Counter />
+          <div className='flex-items btn-group'>
+            <Web3Button
+              contractAddress={contractAddress}
+              contractAbi={counterABI}
+              action={(contract) =>
+                contract.call("increment")
+              }
+              onSuccess={() => alert("Number Increased by 1!")}
+              onError={() => alert("Something went wrong")}
+            >
+              Increment
+            </Web3Button>
+            <Web3Button
+              contractAddress={contractAddress}
+              contractAbi={counterABI}
+              action={(contract) =>
+                contract.call("decrement")
+              }
+              onSuccess={() => alert("Number decreased by 1!")}
+              onError={() => alert("Something went wrong")}
+            >
+              Decrement
+            </Web3Button>
+          </div>
+        </div>
+      </ThirdwebProvider>
     </>
   )
 }
